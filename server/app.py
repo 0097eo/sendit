@@ -1,12 +1,13 @@
 from flask import request, jsonify
 from flask_restful import Resource
 from config import app, api, db
-from flask_jwt_extended import create_access_token
-from models import User, Customer
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from models import User, Customer, Parcel
 from email.mime.text import MIMEText
 import smtplib
 import secrets
 from datetime import timedelta
+from sqlalchemy.orm import Session
 
 # User verification
 def send_verification_email(email, verification_code):
@@ -92,7 +93,122 @@ class VerifyEmail(Resource):
         db.session.commit()
 
         return {'message': 'Email verified successfully'}, 200
+    
+class ParcelResource(Resource):
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        current_user_id = get_jwt_identity()
+        new_parcel = Parcel(
+            weight=data['weight'],
+            pickup_location=data['pickup_location'],
+            destination=data['destination'],
+            customer_id=current_user_id
+        )
+        db.session.add(new_parcel)
+        db.session.commit()
+        return {'message': 'Parcel created successfully', 'parcel_id': new_parcel.id}, 201
+    
+    @jwt_required()
+    def get(self, parcel_id=None):
+        current_user_id = get_jwt_identity()
+        user = db.session.get(User, current_user_id)
 
+
+        if parcel_id:
+            parcel = db.session.get(Parcel, parcel_id)
+            if not parcel or (parcel.customer_id != current_user_id and not user.is_admin):
+                return {'message': 'Parcel not found or access denied'}, 404
+
+            return {
+                'id': parcel.id,
+                'weight': parcel.weight,
+                'pickup_location': parcel.pickup_location,
+                'pickup_latitude': parcel.pickup_latitude,
+                'pickup_longitude': parcel.pickup_longitude,
+                'destination': parcel.destination,
+                'destination_latitude': parcel.destination_latitude,
+                'destination_longitude': parcel.destination_longitude,
+                'status': parcel.status,
+                'present_location': parcel.present_location,
+                'present_latitude': parcel.present_latitude,
+                'present_longitude': parcel.present_longitude,
+                'travel_distance': parcel.travel_distance,
+                'journey_duration': parcel.journey_duration,
+                'customer_id': parcel.customer_id,
+                'created_at': parcel.created_at.strftime('%Y-%m-%d'),
+                'updated_at': parcel.updated_at.strftime('%Y-%m-%d') if parcel.updated_at else None
+            }, 200
+
+        else:
+            # Search parameters: status, pickup_location, destination
+            status = request.args.get('status')
+            pickup_location = request.args.get('pickup_location')
+            destination = request.args.get('destination')
+            weight = request.args.get('weight')
+
+            # Build query
+            query = Parcel.query
+            if not user.is_admin:
+                query = query.filter_by(customer_id=current_user_id)
+
+            if status:
+                query = query.filter(Parcel.status.ilike(f'%{status}%'))
+            if pickup_location:
+                query = query.filter(Parcel.pickup_location.ilike(f'%{pickup_location}%'))
+            if destination:
+                query = query.filter(Parcel.destination.ilike(f'%{destination}%'))
+            if weight:
+                query = query.filter(Parcel.weight.ilike(f'%{weight}%'))
+
+            parcels = query.all()
+
+            # Return selected fields for each parcel
+            return [
+                {
+                    'id': parcel.id,
+                    'weight': parcel.weight,
+                    'pickup_location': parcel.pickup_location,
+                    'destination': parcel.destination,
+                    'status': parcel.status,
+                    'travel_distance': parcel.travel_distance,
+                    'customer_id': parcel.customer_id
+                } for parcel in parcels
+            ], 200
+        
+    @jwt_required()
+    def put(self, parcel_id):
+        data = request.get_json()
+        current_user_id = get_jwt_identity()
+        parcel = db.session.get(Parcel, parcel_id)
+
+        if not parcel or parcel.customer_id != current_user_id:
+            return {'message': 'Parcel not found or unauthorized'}, 404
+
+        if not parcel.can_modify():
+            return {'message': 'Parcel cannot be modified'}, 400
+
+        parcel.destination = data.get('destination', parcel.destination)
+        db.session.commit()
+        return {'message': 'Parcel updated successfully'}
+    
+    @jwt_required()
+    def delete(self, parcel_id):
+        current_user_id = get_jwt_identity()
+        parcel = db.session.get(Parcel, parcel_id)
+
+        if not parcel or parcel.customer_id!= current_user_id:
+            return {'message': 'Parcel not found or unauthorized'}, 404
+
+        if not parcel.can_modify():
+            return {'message': 'Parcel cannot be deleted'}, 400
+
+        db.session.delete(parcel)
+        db.session.commit()
+        return {'message': 'Parcel deleted successfully'}
+
+
+api.add_resource(ParcelResource, '/parcels', '/parcels/<int:parcel_id>')
 api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
 api.add_resource(VerifyEmail, '/verify-email')
