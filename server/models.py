@@ -2,6 +2,8 @@ from config import bcrypt, db
 from sqlalchemy import func
 
 class User(db.Model):
+    __tablename__ = 'users'
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), nullable=False, unique=True)
@@ -46,6 +48,8 @@ class Customer(User):
     }
 
 class Parcel(db.Model):
+    __tablename__ = 'parcels'
+
     id = db.Column(db.Integer, primary_key=True)
     weight = db.Column(db.Float, nullable=False)
     pickup_location = db.Column(db.String(255), nullable=False)
@@ -70,8 +74,10 @@ class Parcel(db.Model):
         return self.status != 'Delivered'
 
 class ParcelStatusUpdate(db.Model):
+    __tablename__ = 'status_updates'
+
     id = db.Column(db.Integer, primary_key=True)
-    parcel_id = db.Column(db.Integer, db.ForeignKey('parcel.id'), nullable=False)
+    parcel_id = db.Column(db.Integer, db.ForeignKey('parcels.id'), nullable=False)
     status = db.Column(db.String(50), nullable=False)
     location = db.Column(db.String(255))
     latitude = db.Column(db.Float)
@@ -81,6 +87,8 @@ class ParcelStatusUpdate(db.Model):
     parcel = db.relationship('Parcel', backref=db.backref('status_updates', lazy=True))
 
 class Quote(db.Model):
+    __tablename__ = 'quotes'
+
     id = db.Column(db.Integer, primary_key=True)
     weight_category = db.Column(db.String(50), nullable=False)
     price = db.Column(db.Float, nullable=False)
@@ -88,9 +96,11 @@ class Quote(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=func.now())
 
 class Notification(db.Model):
+    __tablename__ = 'notifications'
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    parcel_id = db.Column(db.Integer, db.ForeignKey('parcel.id'), nullable=False)
+    parcel_id = db.Column(db.Integer, db.ForeignKey('parcels.id'), nullable=False)
     notification_type = db.Column(db.String(50), nullable=False)
     message = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
