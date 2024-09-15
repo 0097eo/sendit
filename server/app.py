@@ -2,7 +2,7 @@ from flask import request, jsonify
 from flask_restful import Resource
 from config import app, api, db
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from models import User, Customer, Parcel
+from models import User, Customer, Parcel, Quote, Admin
 from email.mime.text import MIMEText
 import smtplib
 import secrets
@@ -206,12 +206,31 @@ class ParcelResource(Resource):
         db.session.delete(parcel)
         db.session.commit()
         return {'message': 'Parcel deleted successfully'}
+    
+class QuoteResource(Resource):
+    def get(self):
+        quotes = Quote.query.all()
+        return jsonify([{'weight_category': q.weight_category, 'price': q.price} for q in quotes])
+
+    @jwt_required()
+    def post(self):
+        current_user_id = get_jwt_identity()
+        admin = Admin.query.get(current_user_id)
+        if not admin:
+            return {'message': 'Unauthorized'}, 403
+
+        data = request.get_json()
+        new_quote = Quote(weight_category=data['weight_category'], price=data['price'])
+        db.session.add(new_quote)
+        db.session.commit()
+        return {'message': 'Quote added successfully'}, 201
 
 
 api.add_resource(ParcelResource, '/parcels', '/parcels/<int:parcel_id>')
 api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
 api.add_resource(VerifyEmail, '/verify-email')
+api.add_resource(QuoteResource, '/quotes')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
