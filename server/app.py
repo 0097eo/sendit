@@ -9,6 +9,8 @@ import secrets
 from datetime import timedelta
 from sqlalchemy.orm import Session
 
+session = Session(db.engine)
+
 # User verification
 def send_verification_email(email, verification_code):
     sender = 'emmanuelokello294@gmail.com'
@@ -208,9 +210,29 @@ class ParcelResource(Resource):
         return {'message': 'Parcel deleted successfully'}
     
 class QuoteResource(Resource):
-    def get(self):
+    def get(self, quote_id=None):
+        if quote_id:
+            quote = Quote.query.get(quote_id)
+            if quote:
+                return {
+                    'id': quote.id,
+                    'weight_category': quote.weight_category,
+                    'price': quote.price,
+                    'created_at': quote.created_at.isoformat() if quote.created_at else None,
+                    'updated_at': quote.updated_at.isoformat() if quote.updated_at else None
+                }, 200
+            return {'message': 'Quote not found'}, 404
+        
         quotes = Quote.query.all()
-        return jsonify([{'weight_category': q.weight_category, 'price': q.price} for q in quotes])
+        return [
+            {
+                'id': quote.id,
+                'weight_category': quote.weight_category,
+                'price': quote.price,
+                'created_at': quote.created_at.isoformat() if quote.created_at else None,
+                'updated_at': quote.updated_at.isoformat() if quote.updated_at else None
+            } for quote in quotes
+        ], 200
 
     @jwt_required()
     def post(self):
