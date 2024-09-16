@@ -9,8 +9,6 @@ import secrets
 from datetime import timedelta
 from sqlalchemy.orm import Session
 
-session = Session(db.engine)
-
 # User verification
 def send_verification_email(email, verification_code):
     sender = 'emmanuelokello294@gmail.com'
@@ -143,7 +141,7 @@ class ParcelResource(Resource):
             }, 200
 
         else:
-            # Search parameters: status, pickup_location, destination
+            # Search parameters: status, pickup_location, destination, weight
             status = request.args.get('status')
             pickup_location = request.args.get('pickup_location')
             destination = request.args.get('destination')
@@ -212,7 +210,7 @@ class ParcelResource(Resource):
 class QuoteResource(Resource):
     def get(self, quote_id=None):
         if quote_id:
-            quote = Quote.query.get(quote_id)
+            quote = db.session.get(Quote, quote_id)
             if quote:
                 return {
                     'id': quote.id,
@@ -237,22 +235,29 @@ class QuoteResource(Resource):
     @jwt_required()
     def post(self):
         current_user_id = get_jwt_identity()
-        admin = Admin.query.get(current_user_id)
+        admin = db.session.get(Admin, current_user_id)
         if not admin:
             return {'message': 'Unauthorized'}, 403
 
         data = request.get_json()
-        new_quote = Quote(weight_category=data['weight_category'], price=data['price'])
+        new_quote = Quote(
+            weight_category=data.get('weight_category'),
+            price=data.get('price')
+        )
         db.session.add(new_quote)
         db.session.commit()
+
         return {'message': 'Quote added successfully'}, 201
+
+
+        
 
 
 api.add_resource(ParcelResource, '/parcels', '/parcels/<int:parcel_id>')
 api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
 api.add_resource(VerifyEmail, '/verify-email')
-api.add_resource(QuoteResource, '/quotes')
+api.add_resource(QuoteResource, '/quotes', '/quotes/<int:quote_id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
