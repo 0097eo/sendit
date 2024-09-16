@@ -248,9 +248,39 @@ class QuoteResource(Resource):
         db.session.commit()
 
         return {'message': 'Quote added successfully'}, 201
+    
+    @jwt_required()
+    def put(self, quote_id):
+        current_user_id = get_jwt_identity()
+        admin = db.session.get(Admin, current_user_id)
+        if not admin:
+            return {'message': 'Unauthorized'}, 403
 
+        quote = db.session.get(Quote, quote_id)
+        if not quote:
+            return {'message': 'Quote not found'}, 404
 
-        
+        data = request.get_json()
+        quote.weight_category = data.get('weight_category', quote.weight_category)
+        quote.price = data.get('price', quote.price)
+        db.session.commit()
+        return {'message': 'Quote updated successfully'}, 200
+
+    @jwt_required()
+    def delete(self, quote_id):
+        current_user_id = get_jwt_identity()
+        admin = db.session.get(Admin, current_user_id)
+        if not admin:
+            return {'message': 'Unauthorized'}, 403
+
+        quote = db.session.get(Quote, quote_id)
+        if not quote:
+            return {'message': 'Quote not found'}, 404
+
+        db.session.delete(quote)
+        db.session.commit()
+        return {'message': 'Quote deleted successfully'}, 200
+
 
 
 api.add_resource(ParcelResource, '/parcels', '/parcels/<int:parcel_id>')
