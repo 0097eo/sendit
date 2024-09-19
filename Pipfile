@@ -16,6 +16,7 @@ faker = "*"
 bcrypt = "*"
 flask-bcrypt = "*"
 flask-jwt-extended = "*"
+sendgrid = "*"
 
 [dev-packages]
 

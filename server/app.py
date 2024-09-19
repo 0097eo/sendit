@@ -9,13 +9,9 @@ import secrets
 from datetime import timedelta
 from sqlalchemy.orm import Session
 
-# User verification
-def send_verification_email(email, verification_code):
+# Email functions
+def send_email(recipient, subject, body):
     sender = 'emmanuelokello294@gmail.com'
-    recipient = email
-    subject = 'SENDIT - Verify your email'
-    body = f'Your verification code is : {verification_code}'
-
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = sender
@@ -26,12 +22,15 @@ def send_verification_email(email, verification_code):
             smtp.starttls()
             smtp.login('emmanuelokello294@gmail.com', 'quzo ygrw gcse maim')
             smtp.send_message(msg)
-    except smtplib.SMTPException as e:
-        print(f"Error sending verification email: {e}")
-        raise e
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"Error sending email: {e}")
         raise e
+
+def send_verification_email(email, verification_code):
+    subject = 'SENDIT - Verify your email'
+    body = f'Your verification code is: {verification_code}'
+    send_email(email, subject, body)
+
 
 
 class Register(Resource):
