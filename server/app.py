@@ -31,6 +31,16 @@ def send_verification_email(email, verification_code):
     body = f'Your verification code is: {verification_code}'
     send_email(email, subject, body)
 
+def send_status_update_email(email, parcel_id, new_status):
+    subject = 'SENDIT - Parcel Status Update'
+    body = f'Your parcel (ID: {parcel_id}) status has been updated to: {new_status}'
+    send_email(email, subject, body)
+
+def send_location_update_email(email, parcel_id, new_location):
+    subject = 'SENDIT - Parcel Location Update'
+    body = f'Your parcel (ID: {parcel_id}) has been moved to a new location: {new_location}'
+    send_email(email, subject, body)
+
 
 
 class Register(Resource):
