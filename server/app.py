@@ -112,6 +112,8 @@ class ParcelResource(Resource):
             weight=data['weight'],
             pickup_location=data['pickup_location'],
             destination=data['destination'],
+            status='Pending',
+            present_location=data['pickup_location'],
             customer_id=current_user_id
         )
         db.session.add(new_parcel)
@@ -123,7 +125,6 @@ class ParcelResource(Resource):
         current_user_id = get_jwt_identity()
         user = db.session.get(User, current_user_id)
 
-
         if parcel_id:
             parcel = db.session.get(Parcel, parcel_id)
             if not parcel or (parcel.customer_id != current_user_id and not user.is_admin):
@@ -133,17 +134,9 @@ class ParcelResource(Resource):
                 'id': parcel.id,
                 'weight': parcel.weight,
                 'pickup_location': parcel.pickup_location,
-                'pickup_latitude': parcel.pickup_latitude,
-                'pickup_longitude': parcel.pickup_longitude,
                 'destination': parcel.destination,
-                'destination_latitude': parcel.destination_latitude,
-                'destination_longitude': parcel.destination_longitude,
                 'status': parcel.status,
                 'present_location': parcel.present_location,
-                'present_latitude': parcel.present_latitude,
-                'present_longitude': parcel.present_longitude,
-                'travel_distance': parcel.travel_distance,
-                'journey_duration': parcel.journey_duration,
                 'customer_id': parcel.customer_id,
                 'created_at': parcel.created_at.strftime('%Y-%m-%d'),
                 'updated_at': parcel.updated_at.strftime('%Y-%m-%d') if parcel.updated_at else None
@@ -172,7 +165,6 @@ class ParcelResource(Resource):
 
             parcels = query.all()
 
-            # Return selected fields for each parcel
             return [
                 {
                     'id': parcel.id,
@@ -180,7 +172,7 @@ class ParcelResource(Resource):
                     'pickup_location': parcel.pickup_location,
                     'destination': parcel.destination,
                     'status': parcel.status,
-                    'travel_distance': parcel.travel_distance,
+                    'present_location': parcel.present_location,
                     'customer_id': parcel.customer_id
                 } for parcel in parcels
             ], 200
@@ -189,15 +181,38 @@ class ParcelResource(Resource):
     def put(self, parcel_id):
         data = request.get_json()
         current_user_id = get_jwt_identity()
+        user = db.session.get(User, current_user_id)
         parcel = db.session.get(Parcel, parcel_id)
 
-        if not parcel or parcel.customer_id != current_user_id:
-            return {'message': 'Parcel not found or unauthorized'}, 404
+        if not parcel:
+            return {'message': 'Parcel not found'}, 404
 
-        if not parcel.can_modify():
-            return {'message': 'Parcel cannot be modified'}, 400
+        if user.is_admin:
+            # Admin can update status and present location
+            if 'status' in data:
+                old_status = parcel.status
+                parcel.status = data['status']
+                if old_status != parcel.status:
+                    customer = db.session.get(User, parcel.customer_id)
+                    send_status_update_email(customer.email, parcel.id, parcel.status)
 
-        parcel.destination = data.get('destination', parcel.destination)
+            if 'present_location' in data:
+                old_location = parcel.present_location
+                parcel.present_location = data['present_location']
+                if old_location != parcel.present_location:
+                    customer = db.session.get(User, parcel.customer_id)
+                    send_location_update_email(customer.email, parcel.id, parcel.present_location)
+
+        elif parcel.customer_id == current_user_id:
+            # User can only update destination if status is 'Pending'
+            if parcel.status != 'Pending':
+                return {'message': 'Parcel cannot be modified'}, 400
+            
+            if 'destination' in data:
+                parcel.destination = data['destination']
+        else:
+            return {'message': 'Unauthorized'}, 403
+
         db.session.commit()
         return {'message': 'Parcel updated successfully'}
     
@@ -206,10 +221,10 @@ class ParcelResource(Resource):
         current_user_id = get_jwt_identity()
         parcel = db.session.get(Parcel, parcel_id)
 
-        if not parcel or parcel.customer_id!= current_user_id:
+        if not parcel or parcel.customer_id != current_user_id:
             return {'message': 'Parcel not found or unauthorized'}, 404
 
-        if not parcel.can_modify():
+        if parcel.status != 'Pending':
             return {'message': 'Parcel cannot be deleted'}, 400
 
         db.session.delete(parcel)
