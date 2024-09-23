@@ -48,30 +48,17 @@ class Customer(User):
     }
 
 class Parcel(db.Model):
-    __tablename__ = 'parcels'
-
     id = db.Column(db.Integer, primary_key=True)
     weight = db.Column(db.Float, nullable=False)
     pickup_location = db.Column(db.String(255), nullable=False)
-    pickup_latitude = db.Column(db.Float)
-    pickup_longitude = db.Column(db.Float)
     destination = db.Column(db.String(255), nullable=False)
-    destination_latitude = db.Column(db.Float)
-    destination_longitude = db.Column(db.Float)
-    status = db.Column(db.String(50), default='Pending')
-    present_location = db.Column(db.String(255))
-    present_latitude = db.Column(db.Float)
-    present_longitude = db.Column(db.Float)
-    travel_distance = db.Column(db.Float)  # in kilometers
-    journey_duration = db.Column(db.Integer)  # in minutes
+    status = db.Column(db.String(50), nullable=False, default='Pending')
+    present_location = db.Column(db.String(255), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=func.now())
-    updated_at = db.Column(db.DateTime, onupdate=func.now())
-    
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
-    customer = db.relationship('Customer', backref=db.backref('parcels', lazy=True))
+    updated_at = db.Column(db.DateTime, default=func.now())
 
-    def can_modify(self):
-        return self.status != 'Delivered'
+    customer = db.relationship('User', backref=db.backref('parcels', lazy=True))
 
 class ParcelStatusUpdate(db.Model):
     __tablename__ = 'status_updates'

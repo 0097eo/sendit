@@ -61,17 +61,9 @@ def seed_database():
             parcel = Parcel(
                 weight=round(random.uniform(0.1, 50), 2),
                 pickup_location=fake.address(),
-                pickup_latitude=fake.latitude(),
-                pickup_longitude=fake.longitude(),
                 destination=fake.address(),
-                destination_latitude=fake.latitude(),
-                destination_longitude=fake.longitude(),
                 status=random.choice(statuses),
                 present_location=fake.address(),
-                present_latitude=fake.latitude(),
-                present_longitude=fake.longitude(),
-                travel_distance=round(random.uniform(1, 1000), 2),
-                journey_duration=random.randint(30, 10080),  # 30 minutes to 7 days
                 customer_id=customer.id
             )
             db.session.add(parcel)
