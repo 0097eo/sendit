@@ -48,13 +48,16 @@ class Customer(User):
     }
 
 class Parcel(db.Model):
+
+    __tablename__ = 'parcels'
+
     id = db.Column(db.Integer, primary_key=True)
     weight = db.Column(db.Float, nullable=False)
     pickup_location = db.Column(db.String(255), nullable=False)
     destination = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(50), nullable=False, default='Pending')
     present_location = db.Column(db.String(255), nullable=False)
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=func.now())
     updated_at = db.Column(db.DateTime, default=func.now())
 
