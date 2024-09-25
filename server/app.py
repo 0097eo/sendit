@@ -80,7 +80,8 @@ class Login(Resource):
             if not user.is_verified:
                 return {'message': 'Please verify your email before logging in.'}, 401
             access_token = create_access_token(identity=user.id, expires_delta=timedelta(days=10))
-            return {'access_token': access_token}, 200
+            user_type = 'admin' if user.is_admin else 'customer'
+            return {'access_token': access_token, 'user_type': user_type}, 200
         return {'message': 'Invalid credentials'}, 401
 
 class VerifyEmail(Resource):
