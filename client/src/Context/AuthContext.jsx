@@ -3,16 +3,15 @@ import PropTypes from 'prop-types';
 
 const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      setUser({ token });
+    const userType = localStorage.getItem('userType');
+    if (token && userType) {
+      setUser({ token, userType });
     }
     setLoading(false);
   }, []);
@@ -44,6 +43,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userType');
     setUser(null);
   };
 
@@ -60,5 +60,7 @@ export const AuthProvider = ({ children }) => {
 AuthProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
+
+export const useAuth = () => useContext(AuthContext);
 
 export default AuthContext;
