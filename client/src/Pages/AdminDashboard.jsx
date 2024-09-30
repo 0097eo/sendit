@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, User, LogOut, DollarSign, Home } from 'lucide-react';
+import { Package, User, LogOut, Home, Banknote } from 'lucide-react';
 import Parcels from '../components/Parcels';
 import Quotes from '../components/Quotes';
 
@@ -86,7 +86,7 @@ const AdminDashboard = () => {
                 activeTab === 'quotes' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
               }`}
             >
-              <DollarSign className="inline-block mr-2" size={18} />
+              <Banknote className="inline-block mr-2" size={18} />
               Quotes
             </button>
             <button

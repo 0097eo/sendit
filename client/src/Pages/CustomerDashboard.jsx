@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, User, LogOut, Home } from 'lucide-react';
+import { Package, User, LogOut, Home, Banknote } from 'lucide-react';
 import Parcels from '../components/Parcels';
 import Quotes from '../components/Quotes';
 
@@ -82,7 +82,7 @@ const CustomerDashboard = () => {
                 activeTab === 'quotes' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
               }`}
             >
-              <Package className="inline-block mr-2" size={18} />
+              <Banknote className="inline-block mr-2" size={18} />
               Quotes
             </button>
             {/* New Home Button */}
