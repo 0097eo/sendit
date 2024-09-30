@@ -306,8 +306,24 @@ class QuoteResource(Resource):
         db.session.commit()
         return {'message': 'Quote deleted successfully'}, 200
 
+class ProfileResource(Resource):
+    @jwt_required()
+    def get(self):
+        current_user_id = get_jwt_identity()
+        user = db.session.get(User, current_user_id)
+        
+        if not user:
+            return {'message': 'User not found'}, 404
+        
+        return {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'is_admin': user.is_admin,
 
+        }, 200
 
+api.add_resource(ProfileResource, '/profile')
 api.add_resource(ParcelResource, '/parcels', '/parcels/<int:parcel_id>')
 api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
