@@ -5,6 +5,10 @@ import { useAuth } from '../Context/AuthContext';
 const HomePage = () => {
   const { user, logout } = useAuth();
 
+  const userType = localStorage.getItem('userType');
+
+  const dashboardPath = userType === 'admin' ? '/admin-dashboard' : '/customer-dashboard';
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -20,6 +24,13 @@ const HomePage = () => {
             <div className="flex items-center">
               {user ? (
                 <>
+                  {/* Dashboard Link */}
+                  <Link
+                    to={dashboardPath}
+                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Dashboard
+                  </Link>
                   <button
                     onClick={logout}
                     className="ml-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium"
@@ -59,7 +70,7 @@ const HomePage = () => {
             <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
               SendIt ensures your packages reach their destination safely and on time. Experience hassle-free shipping with our state-of-the-art tracking system.
             </p>
-              <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
+            <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
               {!user && (
                 <div className="rounded-md shadow">
                   <Link
@@ -69,16 +80,16 @@ const HomePage = () => {
                     Get started
                   </Link>
                 </div>
-                )}
-                <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
-                  <Link
-                    to="/about"
-                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
-                  >
-                    Learn more
-                  </Link>
-                </div>
+              )}
+              <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
+                <Link
+                  to="/about"
+                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
+                >
+                  Learn more
+                </Link>
               </div>
+            </div>
           </div>
         </div>
       </div>
